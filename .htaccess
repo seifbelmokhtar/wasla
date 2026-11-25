@@ -1,0 +1,25 @@
+# WASLA — root .htaccess (ADR-0002, ADR-0003)
+# Front controller rewrite with graceful fallback to ?r= routing.
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Let real files/directories through (assets/, etc.)
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Everything else -> front controller
+  RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+# ── Deny private directories entirely (ADR-0003, SEC-20) ──
+<FilesMatch "^(config\.php|\.env)">
+  Require all denied
+</FilesMatch>
+
+# W-12: subfolder-safe deny rule — the optional first segment matches BOTH
+# root deployments (/storage/…) and subfolder deployments (/wasla/storage/…).
+RedirectMatch 404 ^(/[^/]+)?/(app|lang|database|docs|storage|tests|config)(/|$)
